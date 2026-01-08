@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マーダーミステリーゲーム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ▼▼▼ ここからタイトル画面 ▼▼▼ -->
+    <div id="title-screen">
+        <img src="/Images/title.png" alt="ゲームタイトル" id="title-logo">
+        <p id="start-text">クリックしてスタート</p>
+
+        <!-- ▼▼▼ ここから導入文 ▼▼▼ -->
+        <div id="introduction-container" style="display: none;">
+            <div id="introduction-text"></div>
+            <p id="continue-text">クリックしてゲームを開始</p>
+        </div>
+        <!-- ▲▲▲ ここまで導入文 ▲▲▲ -->
+    </div>
+    <!-- ▲▲▲ ここまでタイトル画面 ▲▲▲ -->
+
+
+    <!-- ▼▼▼ ここからゲーム画面 (最初は非表示) ▼▼▼ -->
+    <div id="game-screen" style="display: none;">
+
+        <div class="container">
+            <div class="header">
+                <p class="header-description">ー証言を聞いて事件の真相を推理しようー</p>
+                <p>警察の到着まで残り <span id="turn-counter">20</span> ターン</p>
+            </div>
+
+            <!-- ▼▼▼ メインコンテンツ（キャラクター画像とチャット） ▼▼▼ -->
+            <div class="main-content">
+                <!-- キャラクター画像表示エリア -->
+                <div id="character-image-area">
+                    <img id="character-image" src="" alt="登場人物">
+                </div>
+
+                <!-- チャットコンテナ -->
+                <div class="chat-container">
+                    <!-- 会話の相手を選択 -->
+                <div class="character-selection" id="characterSelection">
+                    <h2>誰と話しますか？</h2>
+                    <div class="form-group">
+                        <select id="character-select">
+                            <option value="emilia">エミリア・サンドラ (被害者の妻)</option>
+                            <option value="oliver">オリバー・ハワード (小説家)</option>
+                            <option value="lucy">ルーシー・グレイ (使用人)</option>
+                        </select>
+                    </div>
+                </div>
+
+                    <!-- チャット画面 -->
+                <div class="chat-window" id="chatWindow">
+                        <!-- メッセージがここに表示される -->
+                </div>
+
+                    <!-- メッセージ入力欄 -->
+                <div class="message-input-area">
+                        <input type="text" id="messageInput" placeholder="メッセージを入力...">
+                        <button class="btn" id="sendBtn">送信</button>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="loading" id="loading" style="display: none;">AIが応答を考えています...</div>
+        </div>
+
+    </div>
+    <!-- ▲▲▲ ここまでゲーム画面 ▲▲▲ -->
+
+    <script src="script.js"></script>
+</body>
+</html>
