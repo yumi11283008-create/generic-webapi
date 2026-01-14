@@ -14,11 +14,18 @@ const PROVIDER = 'openai';  // 'openai' or 'gemini'
 const MODEL = 'gpt-5.2';  // OpenAI: 'gpt-4o-mini', Gemini: 'gemini-2.5-flash'
 
 let promptTemplate;
+let finalDeductionPromptTemplate;
 try {
     promptTemplate = fs.readFileSync('prompt.md', 'utf8');
+    finalDeductionPromptTemplate = fs.readFileSync('final-deduction-prompt.md', 'utf8');
 } catch (error) {
-    console.error('Error reading prompt.md:', error);
-    process.exit(1);
+    if (error.path === 'prompt.md') {
+        console.error('Error reading prompt.md:', error);
+        process.exit(1);
+    } else if (error.path === 'final-deduction-prompt.md') {
+        console.error('Error reading final-deduction-prompt.md:', error);
+        process.exit(1);
+    }
 }
 
 // 以下のコメントアウトは授業外でOPENAI使いたいとき用
@@ -38,6 +45,10 @@ const characters = {
 app.post('/api/chat', async (req, res) => {
     try {
         const { message, characterId, history } = req.body;
+
+        // ユーザーの発言とAIの応答で1ターン。ユーザーの20回目の発言が来たら最終ターン。
+        // historyには過去のやり取りが入っているので、長さが 19 * 2 = 38 の時に最終ターンフラグを立てる
+        const isFinalTurn = (history || []).length >= 38;
 
         // 選択されたキャラクター名を取得
         const character = characters[characterId];
@@ -67,13 +78,72 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Invalid provider configuration' });
         }
 
-        res.json(result); // AIからの応答は既にJSON形式のはずなのでそのまま返す
+        // AIからの応答に最終ターンかどうかの情報を含めて返す
+        res.json({ ...result, isFinalTurn });
 
     } catch (error) {
         console.error('Chat API Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+app.post('/api/final-deduction', async (req, res) => {
+    try {
+        const { characterId, reasoning, histories } = req.body;
+
+        const suspect = characters[characterId];
+        if (!suspect) {
+            return res.status(400).json({ error: '指定された登場人物が見つかりません。' });
+        }
+
+        // 物語の文脈（最初のプロンプト）を取得
+        const promptParts = promptTemplate.split(/###\s*.*/);
+        const storyContext = promptParts[0]; // 全体設定
+
+        // 容疑者（suspect）のキャラクター設定をprompt.mdからより柔軟に抽出する
+        const characterSettingsRegex = new RegExp(`###.*?${suspect}[\\s\\S]*?\\n([\\s\\S]*?)(?=###|$)`);
+        const match = promptTemplate.match(characterSettingsRegex);
+        const characterSettings = match ? match[1].trim() : '';
+        if (!characterSettings) {
+            console.warn(`Warning: Could not find character settings for ${suspect} in prompt.md`);
+        }
+
+        // 指名された容疑者との会話履歴のみを整形して文字列にする
+        const suspectHistory = histories[characterId] || [];
+        const historyText = suspectHistory
+            .map(h => `${h.role === 'user' ? '探偵' : suspect}: ${h.parts[0].text}`)
+            .join('\n');
+
+        // 最終推理用のプロンプトに変数を埋め込む
+        let finalPrompt = finalDeductionPromptTemplate
+            .replace(/\$\{story_context\}/g, storyContext)
+            .replace(/\$\{character_settings\}/g, characterSettings) // キャラクター設定を追加
+            .replace(/\$\{suspect\}/g, suspect)
+            .replace(/\$\{trick\}/g, reasoning)
+            .replace(/\$\{history\}/g, historyText); // 容疑者との会話履歴を追加
+
+        let result;
+        if (PROVIDER === 'openai') {
+            result = await callOpenAIChat(finalPrompt, true); // JSON形式として解析する
+        } else if (PROVIDER === 'gemini') {
+            result = await callGeminiChat(finalPrompt, true); // JSON形式として解析する
+        } else {
+            return res.status(400).json({ error: 'Invalid provider configuration' });
+        }
+
+        // isCorrectフラグとAIの応答をクライアントに返す
+        const isCorrect = suspect === 'エミリア・サンドラ'; // 正解の犯人を設定
+        res.json({
+            isCorrect: isCorrect,
+            response: result.reply // AIの応答テキストを抽出
+        });
+
+    } catch (error) {
+        console.error('Final Deduction API Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- ここまで追加 ---
 
 app.post('/api/', async (req, res) => {
@@ -153,7 +223,7 @@ async function callOpenAI(prompt) {
 }
 
 // --- ここから追加 ---
-async function callOpenAIChat(prompt) {
+async function callOpenAIChat(prompt, parseAsJson = true) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
 
@@ -166,7 +236,7 @@ async function callOpenAIChat(prompt) {
         body: JSON.stringify({
             model: MODEL,
             messages: [{ role: 'system', content: prompt }],
-            response_format: { type: "json_object" }
+            ...(parseAsJson && { response_format: { type: "json_object" } }) // parseAsJsonがtrueの場合のみ適用
         })
     });
 
@@ -177,11 +247,15 @@ async function callOpenAIChat(prompt) {
 
     const data = await response.json();
     const responseText = data.choices[0].message.content;
-    try {
-        return JSON.parse(responseText);
-    } catch (parseError) {
-        throw new Error('Failed to parse LLM response: ' + responseText);
+    
+    if (parseAsJson) {
+        try {
+            return JSON.parse(responseText);
+        } catch (parseError) {
+            throw new Error('Failed to parse LLM response: ' + responseText);
+        }
     }
+    return { reply: responseText }; // JSONではない場合は、テキストをreplyとして返す
 }
 // --- ここまで追加 ---
 
@@ -229,7 +303,7 @@ async function callGemini(prompt) {
 }
 
 // --- ここから追加 ---
-async function callGeminiChat(prompt) {
+async function callGeminiChat(prompt, parseAsJson = true) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
@@ -240,9 +314,9 @@ async function callGeminiChat(prompt) {
         },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
+            ...(parseAsJson && { generationConfig: {
                 response_mime_type: "application/json"
-            }
+            }})
         })
     });
 
@@ -253,11 +327,15 @@ async function callGeminiChat(prompt) {
 
     const data = await response.json();
     const responseText = data.candidates[0].content.parts[0].text;
-    try {
-        return JSON.parse(responseText);
-    } catch (parseError) {
-        throw new Error('Failed to parse LLM response: ' + responseText);
+    
+    if (parseAsJson) {
+        try {
+            return JSON.parse(responseText);
+        } catch (parseError) {
+            throw new Error('Failed to parse LLM response: ' + responseText);
+        }
     }
+    return { reply: responseText }; // JSONではない場合は、テキストをreplyとして返す
 }
 // --- ここまで追加 ---
 

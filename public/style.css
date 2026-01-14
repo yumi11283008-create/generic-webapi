@@ -84,7 +84,36 @@ body, html {
     background-image: url('/Images/DALLE_dannwa.jpg');
     background-size: cover;
     background-position: center;
-    min-height: 100vh;
+}
+
+/* ▼▼▼ 最終推理画面のスタイル ▼▼▼ */
+#final-deduction-screen {
+    width: 100vw;
+    height: 100vh;
+    background-image: url('/Images/DALLE_dannwa.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex; /* noneからflexに変更して中央揃え */
+    justify-content: center;
+    align-items: center;
+}
+
+#final-deduction-screen .container {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 15px;
+    color: white;
+    text-align: center;
+}
+
+#final-deduction-screen h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+#final-deduction-screen .form-group label {
+    color: #e2e8f0; /* ラベルの文字色を明るくする */
+    text-align: left;
 }
 
 .container {
@@ -113,8 +142,8 @@ body, html {
 }
 
 .header span {
-    color: #ffdddd;
-    font-size: 1.5rem;
+    color: #ff6969;
+    font-size: 2rem;
 }
 
 .header h1 {
@@ -168,7 +197,7 @@ body, html {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #4a5568;
+    /* color: #4a5568; */ /* ここは削除 */
 }
 
 .form-group input,
@@ -265,7 +294,7 @@ body, html {
 .main-content {
     display: flex;
     gap: 20px; /* 画像とチャットの間の隙間 */
-    height: calc(100% - 95px); /* ヘッダーの高さを引いた残り */
+    height: calc(100% - 155px); /* ヘッダーの高さと下部余白を引いた残り */
 }
 
 #character-image-area {
@@ -372,4 +401,31 @@ body, html {
     0% { opacity: 1; }
     50% { opacity: 0.3; }
     100% { opacity: 1; }
+}
+
+/* 最終推理に進むボタンの追加スタイル */
+#go-to-deduction-btn {
+    width: 100%;
+    margin-top: 15px;
+    padding: 15px;
+    font-size: 1.2rem;
+}
+
+/* BGMクレジットのスタイル */
+#bgm-credit, #solve-bgm-credit {
+    position: fixed; /* 画面下部に固定 */
+    bottom: 10px; /* 下からの距離 */
+    left: 50%; /* 左右中央に配置 */
+    transform: translateX(-50%); /* 中央揃えの微調整 */
+    background-color: rgba(0, 0, 0, 0.7); /* 半透明の背景 */
+    color: #ffffff; /* 白い文字色 */
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    z-index: 100; /* 他の要素より手前に表示 */
+}
+
+/* タイトルへ戻るボタンの追加スタイル */
+#restart-btn {
+    margin-top: 25px;
 }

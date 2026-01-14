@@ -28,7 +28,7 @@
 
         <div class="container">
             <div class="header">
-                <p class="header-description">ー証言を聞いて事件の真相を推理しようー</p>
+                <p>ー証言を聞いて事件の真相を推理しようー</p>
                 <p>警察の到着まで残り <span id="turn-counter">20</span> ターン</p>
             </div>
 
@@ -68,9 +68,39 @@
     
             <div class="loading" id="loading" style="display: none;">AIが応答を考えています...</div>
         </div>
+        
+        <!-- BGMクレジット表示用の要素 -->
+        <div id="bgm-credit" style="display: none;">♪BGM:DOVA-SYNDROME 「不穏」created by こっけ</div>
 
     </div>
     <!-- ▲▲▲ ここまでゲーム画面 ▲▲▲ -->
+
+    <!-- ▼▼▼ ここから最終推理画面 (最初は非表示) ▼▼▼ -->
+    <div id="final-deduction-screen" style="display: none;">
+        <div class="container">
+            <h2>最終推理</h2>
+            <p>すべての証言は集まりました。あなたの推理を披露してください。</p>
+            
+            <div class="form-group">
+                <label for="suspect-select">あなたが犯人だと思う人物：</label>
+                <select id="suspect-select">
+                    <option value="emilia">エミリア・サンドラ (被害者の妻)</option>
+                    <option value="oliver">オリバー・ハワード (小説家)</option>
+                    <option value="lucy">ルーシー・グレイ (使用人)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="deduction-text">事件の真相：</label>
+                <textarea id="deduction-text" rows="10" placeholder="あなたの推理をここに記入してください..."></textarea>
+            </div>
+            <button class="btn" id="submit-deduction-btn">真相を突きつける</button>
+        </div>
+
+        <!-- 最終推理BGMクレジット表示用の要素 -->
+        <div id="solve-bgm-credit" style="display: none;">♪BGM:「大正浪漫探偵」created by MOMIZizm MUSiC（もみじば）｜フリーBGM</div>
+    </div>
+    <!-- ▲▲▲ ここまで最終推理画面 ▲▲▲ -->
 
     <script src="script.js"></script>
 </body>
