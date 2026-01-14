@@ -42,6 +42,37 @@ const characters = {
     lucy: 'ルーシー・グレイ'
 };
 
+// --- 気象情報API関連 ---
+// 天気コードを日本語の簡単な説明に変換するヘルパー関数
+function getWeatherDescription(weathercode) {
+    if (weathercode === 0) return '晴れ';
+    if (weathercode >= 1 && weathercode <= 3) return '曇り';
+    if (weathercode >= 45 && weathercode <= 48) return '霧';
+    if (weathercode >= 51 && weathercode <= 67) return '雨';
+    if (weathercode >= 71 && weathercode <= 77) return '雪';
+    if (weathercode >= 80 && weathercode <= 82) return 'にわか雨';
+    if (weathercode >= 95 && weathercode <= 99) return '雷雨';
+    return '不明'; // どれにも当てはまらない場合
+}
+
+async function getCurrentWeather() {
+    try {
+        // Open-Meteo APIで東京の現在の天気、気温、湿度を取得
+        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m');
+        const data = await response.json();
+        const weather = data.current;
+        const weatherDescription = getWeatherDescription(weather.weather_code);
+        const temperature = weather.temperature_2m;
+        const humidity = weather.relative_humidity_2m;
+        const windSpeed = weather.wind_speed_10m;
+        // APIの単位はkm/h
+        return `天気は「${weatherDescription}」、気温は${temperature}度、湿度は${humidity}%、風速は${windSpeed}km/h`;
+    } catch (error) {
+        console.error('気象情報APIの取得に失敗しました:', error);
+        return null; // エラーの場合はnullを返す
+    }
+}
+
 app.post('/api/chat', async (req, res) => {
     try {
         const { message, characterId, history } = req.body;
@@ -56,13 +87,18 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: '指定された登場人物が見つかりません。' });
         }
 
+        // --- 気象情報を取得してプロンプトに追加 ---
+        const weather = await getCurrentWeather();
+        const weatherText = weather ? `現在の${weather}です。この天候や気温、湿度、風速を踏まえた描写や発言をしてください。` : '';
+        // --- ここまで ---
+
         // 会話履歴を文字列に変換
         const historyText = (history || [])
             .map(h => `${h.role === 'user' ? '探偵' : character}: ${h.parts[0].text}`)
             .join('\n');
 
         // prompt.mdのテンプレート変数を置換
-        let finalPrompt = promptTemplate
+        let finalPrompt = promptTemplate.replace(/\$\{weather_info\}/g, weatherText)
             .replace(/\$\{character\}/g, character)
             .replace(/\$\{message\}/g, message)
             .replace(/\$\{history\}/g, historyText);
