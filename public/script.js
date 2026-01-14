@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingIndicator = document.getElementById('loading');
     const turnCounterElement = document.getElementById('turn-counter');
     const sendBtn = document.getElementById('sendBtn');
-    let turnsLeft = 1;
+    let turnsLeft = 20;
     const solveBgmCreditElement = document.getElementById('solve-bgm-credit'); // 最終推理BGMクレジット要素を取得
     const bgmCreditElement = document.getElementById('bgm-credit'); // BGMクレジット要素を取得
     let bgm; // BGMオブジェクトを保持する変数
