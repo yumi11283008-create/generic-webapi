@@ -60,7 +60,17 @@ async function getCurrentWeather() {
         // Open-Meteo APIで東京の現在の天気、気温、湿度を取得
         const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m');
         const data = await response.json();
-        const weather = data.current;
+
+        // デバッグ用にAPIからの応答をコンソールに出力
+        console.log('Weather API Response:', JSON.stringify(data, null, 2));
+
+        // APIからの応答に 'current' が含まれているかチェック
+        if (!data || !data.current) {
+            console.warn('気象情報APIから期待した形式のデータが返されませんでした。');
+            return null; // エラーを投げる代わりにnullを返す
+        }
+
+        const weather = data.current; // data.current が存在することを確認してから代入
         const weatherDescription = getWeatherDescription(weather.weather_code);
         const temperature = weather.temperature_2m;
         const humidity = weather.relative_humidity_2m;
@@ -89,7 +99,7 @@ app.post('/api/chat', async (req, res) => {
 
         // --- 気象情報を取得してプロンプトに追加 ---
         const weather = await getCurrentWeather();
-        const weatherText = weather ? `現在の${weather}です。この天候や気温、湿度、風速を踏まえた描写や発言をしてください。` : '';
+        const weatherText = weather ? `現在の外の状況は${weather}です。` : ''; // フレーバー程度に調整
         // --- ここまで ---
 
         // 会話履歴を文字列に変換
@@ -291,7 +301,7 @@ async function callOpenAIChat(prompt, parseAsJson = true) {
             throw new Error('Failed to parse LLM response: ' + responseText);
         }
     }
-    return { reply: responseText }; // JSONではない場合は、テキストをreplyとして返す
+    return { reply: responseText }; // parseAsJsonがfalseの場合は、テキストをそのままreplyとして返す
 }
 // --- ここまで追加 ---
 
@@ -371,7 +381,7 @@ async function callGeminiChat(prompt, parseAsJson = true) {
             throw new Error('Failed to parse LLM response: ' + responseText);
         }
     }
-    return { reply: responseText }; // JSONではない場合は、テキストをreplyとして返す
+    return { reply: responseText }; // parseAsJsonがfalseの場合は、テキストをそのままreplyとして返す
 }
 // --- ここまで追加 ---
 

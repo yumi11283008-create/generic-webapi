@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         【注意】BGMが流れます`;
 
     // 1. タイトル画面がクリックされたら、導入文を表示
-    titleScreen.addEventListener('click', () => {
+    titleScreen.addEventListener('click', () => { // asyncキーワードを削除
         // タイトルロゴとスタートテキストを非表示に
         titleLogo.style.display = 'none';
         startText.style.display = 'none';
